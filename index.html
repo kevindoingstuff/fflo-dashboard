@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fflo</title>
+<style>body { margin: 0; padding: 24px; background: #0f0f0f; color: #7d7d78; font: 14px system-ui, sans-serif; }</style>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body><p>Open this from a message of the fflo bot.</p>
+<script>
+// The week is in the URL fragment, which never reaches the server that hosts
+// this page. The fragment is the dashboard HTML, deflated and base64url-encoded.
+(async () => {
+  const blob = location.hash.slice(1);
+  if (!blob) return;
+  const bytes = Uint8Array.from(atob(blob.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  const html = await new Response(stream).text();
+  window.Telegram?.WebApp?.expand();
+  document.open(); document.write(html); document.close();
+})().catch(e => { document.body.textContent = "Could not open this week: " + e; });
+</script>
+</body></html>
