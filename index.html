@@ -10,9 +10,12 @@
 // The week is in the URL fragment, which never reaches the server that hosts
 // this page. The fragment is the dashboard HTML, deflated and base64url-encoded.
 (async () => {
-  const blob = location.hash.slice(1);
+  // Telegram adds its own "&tgWebAppData=..." after the fragment; keep only ours.
+  let blob = decodeURIComponent(location.hash.slice(1).split("&")[0]);
   if (!blob) return;
-  const bytes = Uint8Array.from(atob(blob.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
+  blob = blob.replace(/-/g, "+").replace(/_/g, "/");
+  blob += "=".repeat((4 - blob.length % 4) % 4);
+  const bytes = Uint8Array.from(atob(blob), c => c.charCodeAt(0));
   const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
   const html = await new Response(stream).text();
   window.Telegram?.WebApp?.expand();
