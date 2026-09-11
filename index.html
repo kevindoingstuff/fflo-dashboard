@@ -10,8 +10,10 @@
 // The week is in the URL fragment, which never reaches the server that hosts
 // this page. The fragment is the dashboard HTML, deflated and base64url-encoded.
 (async () => {
-  // Telegram adds its own "&tgWebAppData=..." after the fragment; keep only ours.
-  let blob = decodeURIComponent(location.hash.slice(1).split("&")[0]);
+  // Telegram adds its own "tgWebAppData=..." to the fragment; ours is the one
+  // part with no "=" inside, so take the longest base64url run of the URL.
+  const runs = decodeURIComponent(location.hash + location.search).match(/[A-Za-z0-9_-]{40,}/g) || [];
+  let blob = runs.sort((a, b) => b.length - a.length)[0];
   if (!blob) return;
   blob = blob.replace(/-/g, "+").replace(/_/g, "/");
   blob += "=".repeat((4 - blob.length % 4) % 4);
@@ -20,6 +22,8 @@
   const html = await new Response(stream).text();
   window.Telegram?.WebApp?.expand();
   document.open(); document.write(html); document.close();
-})().catch(e => { document.body.textContent = "Could not open this week: " + e; });
+})().catch(e => {
+  document.body.textContent = "Could not open this week: " + e + " · url " + location.href.slice(0, 200);
+});
 </script>
 </body></html>
